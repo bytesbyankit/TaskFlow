@@ -1,0 +1,42 @@
+services:
+  postgres:
+    ports:
+      - "${DATABASE_PORT:-5433}:5432"
+
+  redis:
+    ports:
+      - "6379:6379"
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+      target: deps
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./backend/src:/app/src:delegated
+      - ./backend/nest-cli.json:/app/nest-cli.json:ro
+      - ./backend/tsconfig.json:/app/tsconfig.json:ro
+      - ./backend/tsconfig.build.json:/app/tsconfig.build.json:ro
+    command: npm run start:dev
+    environment:
+      NODE_ENV: development
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: deps
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend/src:/app/src:delegated
+      - ./frontend/public:/app/public:delegated
+      - ./frontend/next.config.ts:/app/next.config.ts:ro
+      - ./frontend/tsconfig.json:/app/tsconfig.json:ro
+      - ./frontend/postcss.config.mjs:/app/postcss.config.mjs:ro
+    command: npm run dev
+    environment:
+      NODE_ENV: development
+      NEXT_PUBLIC_API_URL: http://localhost:3001/api
